@@ -24,10 +24,10 @@ def seed_products():
             print('Sample products already exist. Skipping seeding.')
             return
         samples = [
-            Product(name='Gaming Laptop', price=45900.0, image_url='https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80'),
-            Product(name='Mechanical Keyboard', price=3490.0, image_url='https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=600&q=80'),
-            Product(name='Wireless Mouse', price=1290.0, image_url='https://images.unsplash.com/photo-1511452885603-9d0d1fa40e75?auto=format&fit=crop&w=600&q=80'),
-            Product(name='NVMe SSD 1TB', price=4590.0, image_url='https://images.unsplash.com/photo-1518779578993-ec3579fee39f?auto=format&fit=crop&w=600&q=80'),
+            Product(name='Gaming Laptop', price=45900.0, image_url='https://images.unsplash.com/photo-1551028719-00167b16ebc5?auto=format&fit=crop&w=600&q=85'),
+            Product(name='Mechanical Keyboard', price=3490.0, image_url='https://images.unsplash.com/photo-1587829191301-755e2b8b5e91?auto=format&fit=crop&w=600&q=85'),
+            Product(name='Wireless Mouse', price=1290.0, image_url='https://images.unsplash.com/photo-1587829191301-755e2b8b5e91?auto=format&fit=crop&w=600&q=85'),
+            Product(name='NVMe SSD 1TB', price=4590.0, image_url='https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=600&q=85'),
         ]
         db.session.add_all(samples)
         db.session.commit()

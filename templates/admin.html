@@ -10,7 +10,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
       <div class="container">
         <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
-          <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=80&q=60" alt="Logo" class="me-2 rounded">
+          <img src="https://images.unsplash.com/photo-1601933056885-a89e5cc5fb64?auto=format&fit=crop&w=100&q=80" alt="Logo" class="me-2 rounded" style="height:40px;object-fit:cover">
           <strong>Boonyisa</strong>
         </a>
         <div class="d-flex gap-2">
@@ -67,7 +67,7 @@
                 <td>{{ p.id }}</td>
                 <td>{{ p.name }}</td>
                 <td>฿{{ '%.2f'|format(p.price) }}</td>
-                <td><img src="{{ p.image_url or 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=80&q=60' }}" height="40" class="rounded"></td>
+                <td><img src="{{ p.image_url or 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=80&q=80' }}" height="40" class="rounded"></td>
                 <td>
                   <form method="post" action="{{ url_for('admin_delete', product_id=p.id) }}" onsubmit="return confirm('Delete this product?');">
                     <button class="btn btn-sm btn-danger">ลบ</button>
