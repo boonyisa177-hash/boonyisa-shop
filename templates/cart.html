@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shopping Cart - Boonyisa Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      :root{
+        --bg:#050608;
+        --surface:#0f1720;
+        --muted:#94a3b8;
+        --neon:#00d4ff;
+      }
+      body{font-family:'Inter', system-ui; background:var(--bg); color:var(--muted);}
+      h1,h2,h3{font-family:'Orbitron', sans-serif; color:#e6f7ff}
+      .navbar{background:transparent}
+      .navbar .nav-link{color:#cfeeff}
+      .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);border-radius:12px;color:#dbefff}
+      .btn-primary{background:var(--neon);border:0;color:#001219;border-radius:999px;box-shadow:0 6px 18px rgba(0,212,255,0.14)}
+      .btn-primary:hover{box-shadow:0 10px 30px rgba(0,212,255,0.28);transform:translateY(-2px)}
+      .btn-outline-primary{border-color:var(--neon);color:var(--neon);border-radius:999px}
+      .btn-outline-primary:hover{background:rgba(0,212,255,0.06);color:var(--neon)}
+      .btn-danger{border-radius:999px}
+      footer{background:#020405;color:var(--muted);padding:2rem 0}
+      footer a{color:var(--neon)}
+      .cart-item-img{height:100px;object-fit:cover;border-radius:8px}
+      .alert{border-radius:999px}
+      .qty-btn{background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:var(--neon);border-radius:6px;width:36px;height:36px;padding:0}
+      .qty-btn:hover{background:rgba(0,212,255,0.15)}
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg shadow-sm mb-4">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+          <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=80&q=60" alt="Logo" class="me-2 rounded" style="height:36px">
+          <strong>Boonyisa</strong>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMain">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('view_cart') }}">🛒 Cart <span class="badge bg-neon" style="background:var(--neon);color:#001219">{{ cart_items|length }}</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Admin</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mb-5">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, msg in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category if category in ['success', 'info', 'warning'] else 'info' }}">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <h1 class="display-5 mb-4">Shopping Cart</h1>
+
+      {% if cart_items %}
+        <div class="row">
+          <div class="col-lg-8">
+            {% for item in cart_items %}
+            <div class="card mb-3">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-2">
+                    <img src="{{ item.product.image_url }}" class="cart-item-img" alt="{{ item.product.name }}">
+                  </div>
+                  <div class="col-md-5">
+                    <h5 class="card-title">{{ item.product.name }}</h5>
+                    <p class="text-muted">Price: ฿{{ '%.2f'|format(item.product.price) }}</p>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <form method="post" action="{{ url_for('update_cart', product_id=item.product.id, action='decrease') }}" style="display:inline">
+                        <button type="submit" class="qty-btn">−</button>
+                      </form>
+                      <span><strong>{{ item.qty }}</strong></span>
+                      <form method="post" action="{{ url_for('update_cart', product_id=item.product.id, action='increase') }}" style="display:inline">
+                        <button type="submit" class="qty-btn">+</button>
+                      </form>
+                    </div>
+                  </div>
+                  <div class="col-md-2 text-end">
+                    <p><strong class="text-success" style="color:var(--neon)">฿{{ '%.2f'|format(item.product.price * item.qty) }}</strong></p>
+                  </div>
+                  <div class="col-md-1">
+                    <form method="post" action="{{ url_for('remove_from_cart', product_id=item.product.id) }}" style="display:inline">
+                      <button class="btn btn-sm btn-danger">×</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="col-lg-4">
+            <div class="card p-4 text-center">
+              <h4 class="card-title">Order Summary</h4>
+              <hr class="my-2" style="border-color:rgba(255,255,255,0.1)">
+              <p class="mb-3">Total Items: <strong>{{ cart_items|length }}</strong></p>
+              <p class="mb-4">
+                <span class="h5">Total: </span>
+                <span class="h4" style="color:var(--neon)">฿{{ '%.2f'|format(total) }}</span>
+              </p>
+              <button class="btn btn-primary btn-lg w-100 mb-2">Checkout</button>
+              <a href="{{ url_for('index') }}" class="btn btn-outline-primary w-100">Continue Shopping</a>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="card text-center p-5">
+          <p class="text-muted mb-3">Your cart is empty</p>
+          <a href="{{ url_for('index') }}" class="btn btn-primary">Continue Shopping</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Boonyisa Shop</h5>
+            <p class="small text-muted">Computer hardware and accessories shop. Quality products, fast delivery.</p>
+          </div>
+          <div class="col-md-3">
+            <h6>Contact</h6>
+            <p class="small mb-1">Email: support@boonyisa.example</p>
+            <p class="small">Phone: 012-345-6789</p>
+          </div>
+          <div class="col-md-3 text-md-end">
+            <h6>Address</h6>
+            <p class="small mb-0">123 Tech Street<br>Bangkok, Thailand</p>
+          </div>
+        </div>
+        <hr class="my-3" style="border-color:rgba(255,255,255,0.1)">
+        <div class="d-flex justify-content-between small">
+          <div>© 2026 Boonyisa Shop</div>
+          <div>All rights reserved</div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
