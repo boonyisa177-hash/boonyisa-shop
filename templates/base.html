@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Boonyisa Hotel{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block head_extra %}{% endblock %}
+  </head>
+  <body>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container mt-3">
+          {% for category, msg in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category if category in ['success','info','warning'] else 'info' }}" role="alert">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+          <span class="brand-emoji">🏨</span>
+          <strong>Boonyisa Hotel</strong>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMain">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">หน้าแรก</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('view_booking') }}">📋 การจองของฉัน <span class="badge booking-count">{{ session.get('bookings')|length if session.get('bookings') else 0 }}</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Admin</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <footer class="site-footer mt-5">
+      <div class="container py-4">
+        <div class="row">
+          <div class="col-md-6">
+            <h5>🏨 Boonyisa Hotel</h5>
+            <p class="small text-muted">โรงแรมที่ให้ความสำคัญกับความพึงพอใจของผู้เข้าพัก</p>
+          </div>
+          <div class="col-md-3">
+            <h6>ติดต่อ</h6>
+            <p class="small mb-1">อีเมล: info@boonyisa-hotel.com</p>
+            <p class="small">โทร: 081-234-5678</p>
+          </div>
+          <div class="col-md-3 text-md-end">
+            <h6>ที่อยู่</h6>
+            <p class="small mb-0">123 ถนนโรงแรม<br>กรุงเทพฯ ประเทศไทย</p>
+          </div>
+        </div>
+        <hr class="my-3">
+        <div class="d-flex justify-content-between small">
+          <div>© 2026 Boonyisa Hotel</div>
+          <div>สงวนลิขสิทธิ์</div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        if (window.flatpickr) {
+          flatpickr('.date-picker', {dateFormat: 'd/m/Y', allowInput: true});
+        }
+      });
+    </script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

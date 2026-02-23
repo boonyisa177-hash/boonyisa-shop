@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}ชำระเงินสำเร็จ - Boonyisa Hotel{% endblock %}
+
+{% block content %}
+  <main class="container my-5">
+	<div class="text-center success-container">
+	  <div class="success-icon">✅</div>
+	  <h1 class="mb-2">ชำระเงินสำเร็จ!</h1>
+	  <p class="lead text-muted mb-4">ขอบคุณที่ใช้บริการ Boonyisa Hotel</p>
+
+	  <div class="card p-4 mx-auto" style="max-width:600px;">
+		<h5 class="mb-4">📋 รายละเอียดการจอง</h5>
+
+		<div class="info-box">
+		  <h6 class="mb-2" style="color:#cfeeff">ข้อมูลผู้เข้าพัก</h6>
+		  <div class="price-row"><span>ชื่อ:</span><strong>{{ payment_info.full_name }}</strong></div>
+		  <div class="price-row"><span>อีเมล:</span><strong>{{ payment_info.email }}</strong></div>
+		</div>
+
+		<h6 class="mt-4 mb-3" style="color:#cfeeff">ห้องพักที่จอง</h6>
+		{% for booking in bookings %}
+		<div class="booking-info">
+		  <h6 class="mb-2">{{ loop.index }}. {{ booking.room_name }}</h6>
+		  <div class="price-row small"><span>เข้าพัก:</span><span>📅 {{ booking.check_in|format_date }}</span></div>
+		  <div class="price-row small"><span>ออกพัก:</span><span>📅 {{ booking.check_out|format_date }}</span></div>
+		  <div class="price-row small"><span>จำนวนคืน:</span><span>{{ booking.nights }} คืน</span></div>
+		  <div class="price-row small"><span>ราคา/คืน:</span><span class="text-success">฿{{ '%.2f'|format(booking.price_per_night) }}</span></div>
+		  <div class="price-row small" style="border-top:1px solid rgba(255,255,255,0.05);padding-top:10px;margin-top:10px;font-weight:bold;"><span>รวม:</span><span class="text-success">฿{{ '%.2f'|format(booking.total) }}</span></div>
+		</div>
+		{% endfor %}
+
+		<div style="background:rgba(0,212,255,0.15);padding:20px;border-radius:8px;margin:30px 0;border:1px solid rgba(0,212,255,0.3);">
+		  <h4 style="color:var(--neon);margin:0">ยอดรวมทั้งสิ้น</h4>
+		  <div style="font-size:32px;font-weight:bold;color:var(--neon);margin-top:10px">฿{{ '%.2f'|format(payment_info.total_price) }}</div>
+		</div>
+
+		<div class="alert alert-info" role="alert"><strong>📧 ใบเสร็จ:</strong> บันทึกให้ถูกส่งไปยัง {{ payment_info.email }}</div>
+
+		<div class="d-grid gap-2 mt-4">
+		  <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">🏨 กลับสู่หน้าแรก</a>
+		  <form method="POST" action="{{ url_for('clear_bookings') }}" style="display:inline;"><button type="submit" class="btn btn-outline-secondary w-100">🗑️ ล้างข้อมูลการจอง</button></form>
+		</div>
+
+		<div class="mt-4 p-3" style="background:rgba(255,255,255,0.02);border-radius:8px;border-left:4px solid var(--neon);">
+		  <h6 style="color:#cfeeff;margin-bottom:10px">ข้อมูลการจอง</h6>
+		  <small>
+			<strong>เลขอ้างอิง:</strong> BK-{{ session.session_id[:8] if session.session_id else 'XXXX' }}-{{ '%04d' % payment_info.booking_count }}<br>
+			<strong>สถานะ:</strong> <span style="color:var(--neon)">{{ payment_info.status | upper }}</span><br>
+			<strong>วันที่ชำระเงิน:</strong> {{ now.strftime('%d/%m/%Y %H:%M') if now else 'Feb 23, 2026' }}<br>
+			<strong>จำนวนห้อง:</strong> {{ payment_info.booking_count }} ห้อง
+		  </small>
+		</div>
+	  </div>
+	</div>
+  </main>
+{% endblock %}

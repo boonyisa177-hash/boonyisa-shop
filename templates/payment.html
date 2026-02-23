@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}ชำระเงิน - Boonyisa Hotel{% endblock %}
+
+{% block content %}
+<main class="container my-5 payment-page">
+    <div class="row justify-content-center">
+        <div class="col-lg-5 mb-4">
+            <div class="card p-4 payment-summary">
+                <h4 class="mb-3">📋 สรุปการจอง <span class="badge-accent ms-2">สรุป</span></h4>
+                {% for booking in bookings %}
+                <div class="mb-3 pb-2 booking-row">
+                    <div>
+                        <h6 class="mb-1">{{ booking.room_name }} <small class="text-muted">• {{ booking.room_type }}</small></h6>
+                        <div class="small text-muted">👥 {{ booking.guests }} • 📅 {{ booking.check_in|format_date }} → {{ booking.check_out|format_date }}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted">฿{{ '%.2f'|format(booking.price_per_night) }} / คืน</div>
+                        <div class="mt-2 fw-bold text-success">฿{{ '%.2f'|format(booking.total) }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="divider"></div>
+                <div class="mt-3 p-3 total-box text-center">
+                    <div class="small text-muted">ยอดรวมทั้งหมด</div>
+                    <div class="h3 text-success mb-0">฿{{ '%.2f'|format(total_price) }}</div>
+                    <div class="small text-muted mt-2">ห้องพัก {{ bookings|length }} ห้อง</div>
+                </div>
+
+                <div class="mt-3 d-grid gap-2">
+                    <a href="{{ url_for('view_booking') }}" class="btn btn-outline-secondary">← แก้ไขการจอง</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5 mb-4">
+            <div class="card p-4 payment-form">
+                <h4 class="mb-3">💳 ข้อมูลการชำระเงิน <small class="text-muted">(ปลอดภัย)</small></h4>
+                <div class="secure-note mb-3"><div class="lock">🔒</div><div>ข้อมูลบัตรจะถูกส่งแบบเข้ารหัส (Demo)</div></div>
+                <form method="POST" action="{{ url_for('payment') }}">
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">ชื่อ-นามสกุล *</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" placeholder="เช่น นายสมชาย ใจดี" required>
+                        <small class="text-muted">นามที่ใช้ในการจอง</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">อีเมล *</label>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="example@email.com" required>
+                        <small class="text-muted">จะได้รับใบเสร็จที่อีเมลนี้</small>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <label for="card_number" class="form-label">หมายเลขบัตร *</label>
+                        <input type="text" class="form-control" id="card_number" name="card_number" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                        <small class="text-muted">ใส่จำนวน 16 หลัก</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label for="card_expiry" class="form-label">วันหมดอายุ</label>
+                            <input type="text" class="form-control" id="card_expiry" placeholder="MM/YY" maxlength="5">
+                            <small class="text-muted">เช่น 12/25</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label for="card_cvv" class="form-label">CVV</label>
+                            <input type="text" class="form-control" id="card_cvv" placeholder="123" maxlength="3">
+                            <small class="text-muted">3 หลักหลัง</small>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 mb-2 d-flex justify-content-between align-items-center">
+                        <div class="small text-muted">ยอดรวมการจอง</div>
+                        <div class="fw-bold">฿{{ '%.2f'|format(total_price) }}</div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary btn-lg confirm-btn">✓ ยืนยันการชำระเงิน</button>
+                        <a href="{{ url_for('view_booking') }}" class="btn btn-outline-secondary">ยกเลิก</a>
+                    </div>
+
+                    <div class="alert alert-info mt-3 small" role="alert">
+                        <strong>ℹ️ หมายเหตุ:</strong> นี่คือระบบจำลอง (Demo) ข้อมูลบัตรจะไม่ถูกบันทึก
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function(){
+        var card = document.getElementById('card_number');
+        if(card){
+            card.addEventListener('input', function(e){
+                let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+                let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+                e.target.value = formattedValue;
+            });
+        }
+
+        var exp = document.getElementById('card_expiry');
+        if(exp){
+            exp.addEventListener('input', function(e){
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length >= 2) { value = value.slice(0, 2) + '/' + value.slice(2, 4); }
+                e.target.value = value;
+            });
+        }
+
+        var cvv = document.getElementById('card_cvv'); if(cvv){cvv.addEventListener('input', function(e){ e.target.value = e.target.value.replace(/\D/g, ''); });}
+    })();
+</script>
+{% endblock %}
+                                    </div>

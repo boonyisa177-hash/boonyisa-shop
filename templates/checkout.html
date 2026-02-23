@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout - Boonyisa Hotel{% endblock %}
+
+{% block content %}
+<main class="container my-5">
+  <div class="row gx-4">
+	<div class="col-lg-7">
+	  <h3 class="mb-4">📋 สรุปการจอง</h3>
+
+	  {% for booking in bookings %}
+	  <div class="card mb-3 booking-summary">
+		<div class="card-body">
+		  <div class="d-flex justify-content-between align-items-start">
+			<div>
+			  <h5 class="mb-1">{{ booking.room_name }}</h5>
+			  <div class="small text-muted">ประเภท: <strong class="text-white small">{{ booking.room_type }}</strong></div>
+			  <div class="small text-muted mt-1">👥 {{ booking.guests }} • 📅 {{ booking.check_in|format_date }} → {{ booking.check_out|format_date }}</div>
+			</div>
+			<div class="text-end">
+			  <div class="small text-muted">ราคา/คืน</div>
+			  <div class="fw-bold text-success">฿{{ '%.2f'|format(booking.price_per_night) }}</div>
+			  <div class="mt-2 fw-bold">รวม: <span class="text-success">฿{{ '%.2f'|format(booking.total) }}</span></div>
+			</div>
+		  </div>
+		</div>
+	  </div>
+	  {% endfor %}
+
+	  <div class="card p-3 mt-3 summary-card">
+		<div class="d-flex justify-content-between align-items-center">
+		  <div>
+			<h5 class="mb-0">สรุปคำสั่งซื้อ</h5>
+			<small class="text-muted">{{ bookings|length }} ห้อง • {{ bookings|sum(attribute='nights') if bookings else 0 }} คืน</small>
+		  </div>
+		  <div class="text-success h4">฿{{ '%.2f'|format(total_price) }}</div>
+		</div>
+	  </div>
+	</div>
+
+	<div class="col-lg-5">
+	  <div class="card p-4 payment-form">
+		<h4 class="mb-3">💳 สรุปการชำระเงิน</h4>
+		<p class="small text-muted">ยืนยันข้อมูลการจองก่อนดำเนินการชำระเงิน</p>
+
+		<div class="divider my-3"></div>
+
+		<div class="d-flex justify-content-between align-items-center mb-2">
+		  <div class="small text-muted">ยอดรวมการจอง</div>
+		  <div class="fw-bold">฿{{ '%.2f'|format(total_price) }}</div>
+		</div>
+
+		<div class="d-grid gap-2 mt-3">
+		  <a href="{{ url_for('payment_page') }}" class="btn btn-primary btn-lg">💳 ไปชำระเงิน</a>
+		  <a href="{{ url_for('view_booking') }}" class="btn btn-outline-secondary">← แก้ไขการจอง</a>
+		</div>
+	  </div>
+	</div>
+  </div>
+</main>
+{% endblock %}
+
