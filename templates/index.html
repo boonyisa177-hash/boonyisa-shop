@@ -35,7 +35,8 @@
 					{% set room_reviews = get_reviews(room.id) %}
 					{% if room_reviews %}
 						{% set avg = (room_reviews|map(attribute='rating')|list|sum) / (room_reviews|length) %}
-						<span class="text-warning">{{ '★' * (avg|round(0,'floor')) }}</span>
+						{% set stars = (avg|round(0,'floor')|int) %}
+						<span class="text-warning">{{ '★' * stars }}</span>
 						<span> ({{ room_reviews|length }}) รีวิว</span>
 					{% else %}
 						<span class="text-muted">ยังไม่มีรีวิว</span>

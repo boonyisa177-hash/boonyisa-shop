@@ -303,6 +303,33 @@ def admin_dashboard():
     return render_template('admin.html', rooms=rooms)
 
 
+@app.route('/reviews')
+def reviews_page():
+    # Build mapping room_id -> room object and reviews list
+    rooms = Room.query.all()
+    rooms_map = {str(r.id): r for r in rooms}
+    # collect reviews for all rooms
+    all_reviews = {}
+    # include global REVIEWS
+    for rid, revs in REVIEWS.items():
+        all_reviews.setdefault(rid, []).extend(revs)
+    # include session reviews
+    try:
+        sess = session.get('reviews', {})
+        for rid, revs in sess.items():
+            all_reviews.setdefault(rid, []).extend(revs)
+    except Exception:
+        pass
+
+    # prepare list of (room, reviews)
+    grouped = []
+    for rid, revs in all_reviews.items():
+        room = rooms_map.get(rid)
+        grouped.append({'room': room, 'reviews': revs})
+
+    return render_template('reviews.html', grouped=grouped)
+
+
 @app.route('/admin/add', methods=['POST'])
 def admin_add():
     if not session.get('admin'):

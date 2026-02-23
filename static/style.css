@@ -138,6 +138,17 @@ h1,h2,h3,h4,h5,h6{font-family:'Orbitron', sans-serif;color:#e6f7ff}
 .review-star{color:var(--accent);margin-left:6px}
 .room-card .review-summary{font-size:.9rem;margin-top:6px}
 
+/* Login page */
+.login-page{min-height:calc(100vh - 120px);background:linear-gradient(180deg, rgba(2,6,23,0.9), rgba(8,18,35,0.95));display:flex;align-items:center}
+.login-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:28px}
+.brand-circle{width:72px;height:72px;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--neon));display:inline-flex;align-items:center;justify-content:center;font-size:32px;color:#001219;margin:0 auto}
+.login-card .form-control{background:#0f1724;border:1px solid rgba(255,255,255,0.04);color:#dbefff}
+.login-card .btn-lg{padding:12px 18px}
+
+@media (max-width:576px){
+	.login-card{padding:18px}
+}
+
 @media (max-width:992px){
 	.summary-card{position:static}
 }

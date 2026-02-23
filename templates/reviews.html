@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}รีวิวจากผู้เข้าพัก - Boonyisa Hotel{% endblock %}
+
+{% block content %}
+<main class="container my-5">
+  <h3 class="mb-4">📝 รีวิวจากผู้เข้าพัก</h3>
+
+  {% if grouped %}
+    <div class="row g-4">
+      {% for group in grouped %}
+        <div class="col-12">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="mb-1">{{ group.room.name if group.room else 'ห้อง (ไม่พบข้อมูล)' }}</h5>
+                <div class="small text-muted">{{ group.room.room_type if group.room else '' }}</div>
+              </div>
+              <div class="small text-muted">รีวิว {{ group.reviews|length }}</div>
+            </div>
+
+            <div class="mt-3 review-list">
+              <ul class="list-unstyled mb-0">
+                {% for r in group.reviews %}
+                <li class="py-2">
+                  <div class="d-flex justify-content-between">
+                    <div><strong>{{ r.name }}</strong> <span class="review-star">{{ '★' * (r.rating|int) }}</span></div>
+                    <div class="small text-muted">{{ r.get('date') or '' }}</div>
+                  </div>
+                  <div class="small text-muted mt-1">{{ r.comment }}</div>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card p-4 text-center">
+      <p class="mb-0">ยังไม่มีรีวิวในขณะนี้</p>
+    </div>
+  {% endif %}
+</main>
+{% endblock %}

@@ -33,6 +33,7 @@
         <div class="collapse navbar-collapse" id="navMain">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">หน้าแรก</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('reviews_page') }}">📝 รีวิว</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('view_booking') }}">📋 การจองของฉัน <span class="badge booking-count">{{ session.get('bookings')|length if session.get('bookings') else 0 }}</span></a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Admin</a></li>
           </ul>
