@@ -41,7 +41,12 @@ h1,h2,h3,h4,h5,h6{font-family:'Orbitron', sans-serif;color:#e6f7ff}
 .muted-small{color:rgba(255,255,255,0.7);font-size:.95rem}
 
 /* Booking page specifics */
-.booking-item{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);border-radius:12px;padding:16px}
+.booking-item{
+	background: linear-gradient(180deg, #0a1428, rgb(7 30 75));
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 12px;
+	padding: 16px;
+}
 .booking-item:hover{box-shadow:0 8px 30px rgba(0,0,0,0.6);transform:translateY(-4px);transition:all .18s ease}
 .booking-meta h5{font-size:1.1rem;margin-bottom:0.25rem}
 .booking-actions .price-summary{font-size:1rem;color:var(--neon);font-weight:700}
