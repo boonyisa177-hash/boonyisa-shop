@@ -96,6 +96,24 @@ class Room(db.Model):
     amenities = db.Column(db.String(500))
 
 
+class Booking(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    customer_name = db.Column(db.String(200), nullable=False)
+    customer_email = db.Column(db.String(200), nullable=False)
+    room_id = db.Column(db.Integer, db.ForeignKey('room.id'), nullable=False)
+    room_name = db.Column(db.String(200), nullable=False)
+    room_type = db.Column(db.String(100))
+    check_in = db.Column(db.String(20), nullable=False)
+    check_out = db.Column(db.String(20), nullable=False)
+    guests = db.Column(db.Integer, nullable=False)
+    price_per_night = db.Column(db.Float, nullable=False)
+    nights = db.Column(db.Integer, nullable=False)
+    total_price = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(50), default='completed')  # completed, cancelled, pending
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+
 def seed_rooms():
     with app.app_context():
         if Room.query.first():
@@ -206,11 +224,11 @@ def add_review(room_id):
 
 @app.route('/my-bookings')
 def view_booking():
-    bookings = session.get('bookings', [])
-    # Calculate nights and totals for display
+    # Get current session bookings (pending/temporary)
+    session_bookings = session.get('bookings', [])
     total_price = 0
-    from datetime import datetime
-    for booking in bookings:
+    
+    for booking in session_bookings:
         try:
             check_in = datetime.strptime(booking.get('check_in', ''), '%Y-%m-%d')
             check_out = datetime.strptime(booking.get('check_out', ''), '%Y-%m-%d')
@@ -223,8 +241,14 @@ def view_booking():
         booking['nights'] = nights
         booking['total'] = booking.get('price_per_night', 0) * nights
         total_price += booking['total']
+    
+    # Get historical bookings from database (only if user has logged in with an email)
+    historical_bookings = []
+    customer_email = session.get('customer_email')
+    if customer_email:
+        historical_bookings = Booking.query.filter_by(customer_email=customer_email).order_by(Booking.created_at.desc()).all()
 
-    return render_template('bookings.html', bookings=bookings, total_price=total_price)
+    return render_template('bookings.html', bookings=session_bookings, total_price=total_price, historical_bookings=historical_bookings)
 
 
 @app.route('/checkout')
@@ -291,7 +315,36 @@ def payment():
     bookings = session.get('bookings', [])
     total_price = sum(booking.get('total', 0) for booking in bookings if 'total' in booking)
     
-    # Store payment info (without card number for security)
+    # Save bookings to database
+    for booking in bookings:
+        try:
+            check_in = datetime.strptime(booking['check_in'], '%Y-%m-%d')
+            check_out = datetime.strptime(booking['check_out'], '%Y-%m-%d')
+            nights = (check_out - check_in).days
+            if nights < 1:
+                nights = 1
+        except Exception:
+            nights = booking.get('nights', 1)
+        
+        db_booking = Booking(
+            customer_name=full_name,
+            customer_email=email,
+            room_id=booking['room_id'],
+            room_name=booking['room_name'],
+            room_type=booking.get('room_type', ''),
+            check_in=booking['check_in'],
+            check_out=booking['check_out'],
+            guests=int(booking.get('guests', 1)),
+            price_per_night=booking['price_per_night'],
+            nights=nights,
+            total_price=booking.get('total', 0),
+            status='completed'
+        )
+        db.session.add(db_booking)
+    
+    db.session.commit()
+    
+    # Store payment info and customer email in session for future reference
     session['payment_info'] = {
         'full_name': full_name,
         'email': email,
@@ -299,6 +352,8 @@ def payment():
         'booking_count': len(bookings),
         'status': 'success'
     }
+    session['customer_email'] = email
+    session['customer_name'] = full_name
     session.modified = True
     flash('ชำระเงินสำเร็จ', 'success')
     return redirect(url_for('payment_success'))
@@ -381,6 +436,31 @@ def admin_dashboard():
         return redirect(url_for('login'))
     rooms = Room.query.all()
     return render_template('admin.html', rooms=rooms)
+
+
+@app.route('/admin/bookings')
+def admin_bookings():
+    if not session.get('admin'):
+        return redirect(url_for('login'))
+    
+    # Get all bookings from database
+    all_bookings = Booking.query.order_by(Booking.created_at.desc()).all()
+    
+    # Group by customer email for summary
+    customer_summary = {}
+    for booking in all_bookings:
+        email = booking.customer_email
+        if email not in customer_summary:
+            customer_summary[email] = {
+                'name': booking.customer_name,
+                'email': email,
+                'count': 0,
+                'total_spent': 0
+            }
+        customer_summary[email]['count'] += 1
+        customer_summary[email]['total_spent'] += booking.total_price
+    
+    return render_template('admin_bookings.html', bookings=all_bookings, customer_summary=customer_summary)
 
 
 @app.route('/reviews')
