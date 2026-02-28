@@ -110,9 +110,9 @@ h1,h2,h3,h4,h5,h6{font-family:'Orbitron', sans-serif;color:#e6f7ff}
 .total-box{background:linear-gradient(90deg, rgba(14,165,255,0.06), rgba(0,212,255,0.04));border:1px solid rgba(0,212,255,0.08)}
 
 .payment-form{box-shadow:0 12px 40px rgba(2,6,23,0.7);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
-.payment-form .form-control{background:#0f1724;border:1px solid rgba(255,255,255,0.04);padding:12px}
-.payment-form .form-label{color:#cfeeff}
-.payment-form .small{color:rgba(255,255,255,0.6)}
+	.payment-form .form-control{background:#0f1724;border:1px solid rgba(255,255,255,0.04);padding:12px}
+	.payment-form .form-label{color:#cfeeff}
+	.payment-form .small{color:#001219}
 
 .confirm-btn{background:linear-gradient(90deg,var(--accent),var(--neon));color:#001219;border:0;box-shadow:0 8px 24px rgba(0,212,255,0.12)}
 .confirm-btn:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,212,255,0.18)}
@@ -156,5 +156,14 @@ h1,h2,h3,h4,h5,h6{font-family:'Orbitron', sans-serif;color:#e6f7ff}
 
 @media (max-width:992px){
 	.summary-card{position:static}
+}
+
+/* Table cell styling for dark background */
+.table>:not(caption)>*>* {
+	padding: .5rem .5rem;
+	color: var(--bs-table-color-state, var(--bs-table-color-type, #ffffff));
+	background-color: #0a1428;
+	border-bottom-width: var(--bs-border-width);
+	box-shadow: inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, rgb(255 255 255 / 0%)));
 }
 
