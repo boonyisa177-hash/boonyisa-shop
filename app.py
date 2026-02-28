@@ -114,6 +114,18 @@ class Booking(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
 
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    room_id = db.Column(db.Integer, db.ForeignKey('room.id'), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    rating = db.Column(db.Integer, nullable=False, default=5)
+    comment = db.Column(db.Text, nullable=False)
+    image = db.Column(db.String(500))  # filename of the uploaded image
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    
+    room = db.relationship('Room', backref='reviews')
+
+
 def seed_rooms():
     with app.app_context():
         if Room.query.first():
@@ -188,12 +200,23 @@ def booking(room_id):
 
 @app.route('/review/<int:room_id>', methods=['POST'])
 def add_review(room_id):
+    # Verify room exists
+    room = Room.query.get_or_404(room_id)
+    
     name = request.form.get('review_name') or 'Anonymous'
     try:
         rating = int(request.form.get('rating') or 5)
+        if rating < 1:
+            rating = 1
+        if rating > 5:
+            rating = 5
     except Exception:
         rating = 5
     comment = request.form.get('comment') or ''
+    
+    if not comment.strip():
+        flash('กรุณากรอกความเห็น', 'warning')
+        return redirect(request.referrer or url_for('index'))
     
     # Handle image upload
     image_filename = None
@@ -204,6 +227,18 @@ def add_review(room_id):
             if not image_filename:
                 flash('ไม่สามารถบันทึกรูปภาพ - โปรดใช้รูปภาพ PNG, JPG, JPEG, GIF หรือ WEBP ที่มีขนาดไม่เกิน 5 MB', 'warning')
 
+    # Save review to database
+    review = Review(
+        room_id=room_id,
+        name=name,
+        rating=rating,
+        comment=comment,
+        image=image_filename
+    )
+    db.session.add(review)
+    db.session.commit()
+    
+    # Also keep session reviews for backward compatibility
     reviews = session.get('reviews', {})
     key = str(room_id)
     lst = reviews.get(key, [])
@@ -218,6 +253,7 @@ def add_review(room_id):
     reviews[key] = lst
     session['reviews'] = reviews
     session.modified = True
+    
     flash('ขอบคุณสำหรับรีวิว!', 'success')
     return redirect(request.referrer or url_for('index'))
 
@@ -389,25 +425,44 @@ def cancel_booking(booking_index):
 @app.route('/delete-review-image/<int:room_id>/<int:review_index>', methods=['POST'])
 def delete_review_image(room_id, review_index):
     """Delete a review image"""
-    reviews = session.get('reviews', {})
-    key = str(room_id)
-    
-    if key in reviews and 0 <= review_index < len(reviews[key]):
-        review = reviews[key][review_index]
+    # Try to delete from database first (if it's a database review)
+    review_objs = Review.query.filter_by(room_id=room_id).order_by(Review.created_at.desc()).all()
+    if 0 <= review_index < len(review_objs):
+        review = review_objs[review_index]
         # Delete the image file if it exists
-        if review.get('image'):
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], review['image'])
+        if review.image:
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], review.image)
             try:
                 if os.path.exists(filepath):
                     os.remove(filepath)
             except Exception as e:
                 print(f"Error deleting file: {e}")
         
-        # Remove the image from the review
-        review['image'] = None
-        session['reviews'] = reviews
-        session.modified = True
+        # Clear image reference from review
+        review.image = None
+        db.session.commit()
         flash('ลบรูปภาพสำเร็จ', 'success')
+    else:
+        # Fallback: try session reviews
+        reviews = session.get('reviews', {})
+        key = str(room_id)
+        
+        if key in reviews and 0 <= review_index < len(reviews[key]):
+            review = reviews[key][review_index]
+            # Delete the image file if it exists
+            if review.get('image'):
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], review['image'])
+                try:
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
+                except Exception as e:
+                    print(f"Error deleting file: {e}")
+            
+            # Remove the image from the review
+            review['image'] = None
+            session['reviews'] = reviews
+            session.modified = True
+            flash('ลบรูปภาพสำเร็จ', 'success')
     
     return redirect(request.referrer or url_for('reviews_page'))
 
@@ -465,28 +520,39 @@ def admin_bookings():
 
 @app.route('/reviews')
 def reviews_page():
-    # Build mapping room_id -> room object and reviews list
+    # Get all rooms and their reviews from database
     rooms = Room.query.all()
-    rooms_map = {str(r.id): r for r in rooms}
-    # collect reviews for all rooms
-    all_reviews = {}
-    # include global REVIEWS
-    for rid, revs in REVIEWS.items():
-        all_reviews.setdefault(rid, []).extend(revs)
-    # include session reviews
-    try:
-        sess = session.get('reviews', {})
-        for rid, revs in sess.items():
-            all_reviews.setdefault(rid, []).extend(revs)
-    except Exception:
-        pass
-
-    # prepare list of (room, reviews)
+    review_objs = Review.query.order_by(Review.created_at.desc()).all()
+    
+    # Group reviews by room
+    room_reviews = {}
+    for review in review_objs:
+        room_id = review.room_id
+        if room_id not in room_reviews:
+            room_reviews[room_id] = []
+        room_reviews[room_id].append({
+            'name': review.name,
+            'rating': review.rating,
+            'comment': review.comment,
+            'image': review.image,
+            'date': review.created_at.strftime('%d/%m/%Y %H:%M') if review.created_at else ''
+        })
+    
+    # Prepare grouped data
     grouped = []
-    for rid, revs in all_reviews.items():
-        room = rooms_map.get(rid)
-        grouped.append({'room': room, 'reviews': revs})
-
+    for room in rooms:
+        reviews_list = room_reviews.get(room.id, [])
+        # Also include session reviews for backward compatibility
+        try:
+            sess = session.get('reviews', {})
+            sess_reviews = sess.get(str(room.id), [])
+            reviews_list.extend(sess_reviews)
+        except Exception:
+            pass
+        
+        if reviews_list:  # Only show rooms that have reviews
+            grouped.append({'room': room, 'reviews': reviews_list})
+    
     return render_template('reviews.html', grouped=grouped)
 
 
