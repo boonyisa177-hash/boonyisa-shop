@@ -63,9 +63,25 @@
 						{% if room_reviews %}
 							<ul class="list-unstyled mb-3">
 								{% for r in room_reviews %}
-								<li class="mb-2">
-									<div class="d-flex justify-content-between"><strong>{{ r.name }}</strong><span class="text-warning">{{ '★' * r.rating }}</span></div>
-									<div class="small text-muted">{{ r.comment }}</div>
+								<li class="mb-3 pb-2 border-bottom">
+									<div class="d-flex justify-content-between align-items-start">
+										<div>
+											<strong>{{ r.name }}</strong> 
+											<span class="text-warning ms-2">{{ '★' * (r.rating|int) }}</span>
+										</div>
+										<div class="small text-muted">{{ r.get('date') or '' }}</div>
+									</div>
+									<div class="small text-muted mt-1">{{ r.comment }}</div>
+									{% if r.get('image') %}
+									<div class="mt-2 position-relative d-inline-block">
+										<img src="/static/uploads/{{ r.image }}" alt="Review image" class="img-fluid rounded" style="max-width: 250px; max-height: 250px;">
+										<form method="POST" action="{{ url_for('delete_review_image', room_id=room.id, review_index=loop.index0) }}" style="display: inline;">
+											<button type="submit" class="btn btn-sm btn-danger position-absolute" style="top: 5px; right: 5px;" title="ลบรูปภาพ" onclick="return confirm('คุณแน่ใจหรือว่าต้องการลบรูปภาพนี้?');">
+												✕
+											</button>
+										</form>
+									</div>
+									{% endif %}
 								</li>
 								{% endfor %}
 							</ul>
@@ -73,7 +89,7 @@
 							<p class="small text-muted mb-3">ยังไม่มีรีวิวสำหรับห้องนี้</p>
 						{% endif %}
 
-						<form method="POST" action="{{ url_for('add_review', room_id=room.id) }}">
+						<form method="POST" action="{{ url_for('add_review', room_id=room.id) }}" enctype="multipart/form-data">
 							<div class="mb-2">
 								<input type="text" class="form-control" name="review_name" placeholder="ชื่อ (ไม่บังคับ)">
 							</div>
@@ -88,13 +104,44 @@
 							<div class="mb-2">
 								<textarea name="comment" class="form-control" rows="2" placeholder="เขียนรีวิวของคุณ..."></textarea>
 							</div>
+							<div class="mb-2">
+								<label for="review_image" class="form-label">📷 เพิ่มรูปภาพ (ไม่บังคับ)</label>
+								<input type="file" class="form-control" id="review_image" name="review_image" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" onchange="previewImage(event)">
+								<small class="text-muted d-block mt-1">รองรับ: PNG, JPG, JPEG, GIF, WEBP (สูงสุด 5 MB)</small>
+							</div>
+							<div id="preview-container" class="mb-2" style="display: none;">
+								<img id="preview-image" alt="Preview" class="img-fluid rounded" style="max-width: 200px; max-height: 200px;">
+								<button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearImagePreview()">ลบรูป</button>
+							</div>
 							<div class="d-flex gap-2">
 								<button class="btn btn-outline-primary btn-sm" type="submit">ส่งรีวิว</button>
-								<a href="#" class="btn btn-outline-secondary btn-sm" onclick="this.closest('form').reset();return false;">ยกเลิก</a>
+								<a href="#" class="btn btn-outline-secondary btn-sm" onclick="this.closest('form').reset();clearImagePreview();return false;">ยกเลิก</a>
 							</div>
 						</form>
 					</div>
 			</div>
 		</div>
 	</main>
+
+	<script>
+		function previewImage(event) {
+			const file = event.target.files[0];
+			const preview = document.getElementById('preview-image');
+			const container = document.getElementById('preview-container');
+			
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function(e) {
+					preview.src = e.target.result;
+					container.style.display = 'block';
+				};
+				reader.readAsDataURL(file);
+			}
+		}
+		
+		function clearImagePreview() {
+			document.getElementById('review_image').value = '';
+			document.getElementById('preview-container').style.display = 'none';
+		}
+	</script>
 {% endblock %}

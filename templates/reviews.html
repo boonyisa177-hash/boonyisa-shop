@@ -22,12 +22,28 @@
             <div class="mt-3 review-list">
               <ul class="list-unstyled mb-0">
                 {% for r in group.reviews %}
-                <li class="py-2">
-                  <div class="d-flex justify-content-between">
-                    <div><strong>{{ r.name }}</strong> <span class="review-star">{{ '★' * (r.rating|int) }}</span></div>
+                <li class="py-2 border-bottom">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <strong>{{ r.name }}</strong> 
+                      <span class="review-star text-warning ms-2">{{ '★' * (r.rating|int) }}</span>
+                    </div>
                     <div class="small text-muted">{{ r.get('date') or '' }}</div>
                   </div>
-                  <div class="small text-muted mt-1">{{ r.comment }}</div>
+                  <div class="small text-muted mb-2">{{ r.comment }}</div>
+                  
+                  {% if r.get('image') %}
+                  <div class="mt-2">
+                    <div class="position-relative d-inline-block">
+                      <img src="/static/uploads/{{ r.image }}" alt="Review image" class="img-fluid rounded" style="max-width: 300px; max-height: 300px;">
+                      <form method="POST" action="{{ url_for('delete_review_image', room_id=group.room.id, review_index=loop.index0) }}" style="display: inline;" class="position-absolute" style="top: 5px; right: 5px;">
+                        <button type="submit" class="btn btn-sm btn-danger" title="ลบรูปภาพ" onclick="return confirm('คุณแน่ใจหรือว่าต้องการลบรูปภาพนี้?');">
+                          ✕
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                  {% endif %}
                 </li>
                 {% endfor %}
               </ul>
@@ -42,4 +58,20 @@
     </div>
   {% endif %}
 </main>
+
+<style>
+  .review-list li:last-child {
+    border-bottom: none !important;
+  }
+  
+  .position-relative {
+    position: relative;
+  }
+  
+  .position-absolute {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+  }
+</style>
 {% endblock %}

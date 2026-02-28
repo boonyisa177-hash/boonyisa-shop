@@ -1,12 +1,25 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 import os
+from datetime import datetime
+import uuid
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'hotel.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'dev-secret-key-change-me'
+
+# File upload configuration
+UPLOAD_FOLDER = os.path.join(basedir, 'static', 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
+
+# Create uploads folder if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db = SQLAlchemy(app)
 
@@ -46,6 +59,31 @@ def format_date(value, outfmt='%d/%m/%Y'):
     return value
 
 app.jinja_env.filters['format_date'] = format_date
+
+
+def allowed_file(filename):
+    """Check if the file extension is allowed"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def save_review_image(file):
+    """Save uploaded image and return the filename, or None if invalid"""
+    if not file or file.filename == '':
+        return None
+    
+    if not allowed_file(file.filename):
+        return None
+    
+    try:
+        # Generate unique filename to avoid collisions
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"review_{uuid.uuid4().hex}_{int(datetime.now().timestamp())}.{ext}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        return filename
+    except Exception as e:
+        print(f"Error saving file: {e}")
+        return None
 
 
 class Room(db.Model):
@@ -138,11 +176,27 @@ def add_review(room_id):
     except Exception:
         rating = 5
     comment = request.form.get('comment') or ''
+    
+    # Handle image upload
+    image_filename = None
+    if 'review_image' in request.files:
+        file = request.files['review_image']
+        if file and file.filename != '':
+            image_filename = save_review_image(file)
+            if not image_filename:
+                flash('ไม่สามารถบันทึกรูปภาพ - โปรดใช้รูปภาพ PNG, JPG, JPEG, GIF หรือ WEBP ที่มีขนาดไม่เกิน 5 MB', 'warning')
 
     reviews = session.get('reviews', {})
     key = str(room_id)
     lst = reviews.get(key, [])
-    lst.append({'name': name, 'rating': rating, 'comment': comment})
+    review_item = {
+        'name': name, 
+        'rating': rating, 
+        'comment': comment,
+        'image': image_filename,
+        'date': datetime.now().strftime('%d/%m/%Y %H:%M')
+    }
+    lst.append(review_item)
     reviews[key] = lst
     session['reviews'] = reviews
     session.modified = True
@@ -275,6 +329,32 @@ def cancel_booking(booking_index):
             session.modified = True
             flash('Booking cancelled', 'info')
     return redirect(url_for('view_booking'))
+
+
+@app.route('/delete-review-image/<int:room_id>/<int:review_index>', methods=['POST'])
+def delete_review_image(room_id, review_index):
+    """Delete a review image"""
+    reviews = session.get('reviews', {})
+    key = str(room_id)
+    
+    if key in reviews and 0 <= review_index < len(reviews[key]):
+        review = reviews[key][review_index]
+        # Delete the image file if it exists
+        if review.get('image'):
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], review['image'])
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+            except Exception as e:
+                print(f"Error deleting file: {e}")
+        
+        # Remove the image from the review
+        review['image'] = None
+        session['reviews'] = reviews
+        session.modified = True
+        flash('ลบรูปภาพสำเร็จ', 'success')
+    
+    return redirect(request.referrer or url_for('reviews_page'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
